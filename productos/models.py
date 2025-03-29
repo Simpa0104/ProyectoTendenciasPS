@@ -10,3 +10,4 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.marca}"
+    #definimos el método __str__ para que al imprimir el objeto se muestre el nombre y la marca del producto.

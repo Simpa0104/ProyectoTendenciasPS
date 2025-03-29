@@ -4,7 +4,11 @@ from .forms import ProductoForm
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.contrib.auth.decorators import login_required
 
+##############################################################################
+
+@login_required
 def agregar_producto(request):
     query = request.GET.get('q', '')
     
@@ -26,6 +30,9 @@ def agregar_producto(request):
 
     return render(request, 'productos/agregar_productos.html', {'productos': productos, 'query': query})
 
+##############################################################################
+
+@login_required
 def editar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
 
@@ -35,14 +42,18 @@ def editar_producto(request, producto_id):
         producto.cantidad = request.POST['cantidad']
         producto.precio = request.POST['precio']
         
-        # ✅ Verificar si hay una nueva imagen
         if 'imagen' in request.FILES:
             producto.imagen = request.FILES['imagen']
 
         producto.save()
         return redirect('agregar_producto')
 
+##############################################################################
+
+@login_required
 def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     producto.delete()
     return redirect('agregar_producto')
+
+##############################################################################

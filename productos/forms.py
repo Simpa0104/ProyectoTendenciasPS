@@ -10,5 +10,5 @@ class ProductoForm(forms.ModelForm):
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
             'precio': forms.NumberInput(attrs={'class': 'form-control'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control'}),
-            'imagen': forms.ClearableFileInput(attrs={'class': 'form-control'})  # ✅ Selector de archivos
+            'imagen': forms.ClearableFileInput(attrs={'class': 'form-control'})
         }
