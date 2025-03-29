@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Gestión de Productos</h2>
+
+    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalAgregar">
+        Agregar Producto
+    </button>
+
+    <form method="GET" class="mb-3 d-flex">
+        <input type="text" name="q" class="form-control me-2" placeholder="Buscar producto..." value="{{ query }}">
+        <button type="submit" class="btn btn-primary me-2">Buscar</button>
+        <a href="{% url 'agregar_producto' %}" class="btn btn-secondary">Reset</a>
+    </form>
+    
+    
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Imagen</th>
+                <th>Nombre</th>
+                <th>Marca</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            <tr>
+                <td>{{ producto.id }}</td>
+                <td>
+                    {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="img-thumbnail" width="200" height="200">
+                    {% else %}
+                        <span>Sin imagen</span>
+                    {% endif %}
+                </td>
+                <td>{{ producto.nombre }}</td>
+                <td>{{ producto.marca }}</td>
+                <td>{{ producto.cantidad }}</td>
+                <td>{{ producto.precio|intcomma }}</td>
+                <td>
+                    <!-- Botón para editar -->
+                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#modalEditar{{ producto.id }}">
+                        Editar
+                    </button>
+
+                    <!-- Botón para eliminar -->
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#modalEliminar{{ producto.id }}">
+                        Eliminar
+                    </button>
+                </td>
+            </tr>
+
+            <!-- Modal de Editar -->
+            <div class="modal fade" id="modalEditar{{ producto.id }}" tabindex="-1" aria-labelledby="editarLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Editar Producto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="POST" action="{% url 'editar_producto' producto.id %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="modal-body">
+                                <input type="file" name="imagen">
+                                <br>
+                                <label>Nombre:</label>
+                                <input type="text" class="form-control" name="nombre" value="{{ producto.nombre }}">
+                                <label>Marca:</label>
+                                <input type="text" class="form-control" name="marca" value="{{ producto.marca }}">
+                                <label>Cantidad:</label>
+                                <input type="number" class="form-control" name="cantidad" value="{{ producto.cantidad }}">
+                                <label>Precio:</label>
+                                <input type="text" class="form-control" name="precio" value="{{ producto.precio }}">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de Eliminar -->
+            <div class="modal fade" id="modalEliminar{{ producto.id }}" tabindex="-1"
+                aria-labelledby="eliminarLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Eliminar Producto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>¿Estás seguro de que deseas eliminar <strong>{{ producto.nombre }}</strong>?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <a href="{% url 'eliminar_producto' producto.id %}" class="btn btn-danger">Eliminar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal de Agregar Producto -->
+<div class="modal fade" id="modalAgregar" tabindex="-1" aria-labelledby="agregarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'agregar_producto' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="file" name="imagen">
+                    <br>
+                    <label>Nombre:</label>
+                    <input type="text" name="nombre" placeholder="Nombre" class="form-control" required>
+                    <label>Marca:</label>
+                    <input type="text" class="form-control" name="marca" placeholder="Marca" required>
+                    <label>Cantidad:</label>
+                    <input type="number" class="form-control" name="cantidad" placeholder="Cantidad" required>
+                    <label>Precio:</label>
+                    <input type="text" class="form-control" name="precio" placeholder="Precio" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

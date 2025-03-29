@@ -1,0 +1,81 @@
+/* Estilos para la navbar */
+.navbar {
+    background-color: transparent;
+    color: rgb(0, 0, 0);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+}
+
+/* Contenedor de la navbar */
+.navbar-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Nombre del usuario alineado a la izquierda */
+.navbar-left {
+    font-weight: bold;
+}
+
+/* Botón de Logout alineado a la derecha */
+.navbar-right .logout-btn {
+    background-color: red;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.navbar-right .logout-btn:hover {
+    background-color: darkred;
+}
+
+.card {
+    border-radius: 15px;
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+
+.dashboard {
+    width: 100%;
+    max-width: 600px;
+}
+
+.dashboard-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    background: #007bff;
+    border: 2px solid #0056b3;
+    transition: 0.3s;
+}
+
+.dashboard-btn:hover {
+    background: #0056b3;
+}
+
+.big-btn {
+    height: 140px;
+    background: #28a745;
+    border: 2px solid #1c7c31;
+}
+
+.big-btn:hover {
+    background: #1c7c31;
+}
