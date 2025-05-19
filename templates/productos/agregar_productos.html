@@ -1,3 +1,4 @@
+<title>Inventario</title>
 {% extends 'base.html' %}
 
 {% load humanize %}
@@ -15,8 +16,8 @@
         <button type="submit" class="btn btn-primary me-2">Buscar</button>
         <a href="{% url 'agregar_producto' %}" class="btn btn-secondary">Reset</a>
     </form>
-    
-    
+
+
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -35,9 +36,10 @@
                 <td>{{ producto.id }}</td>
                 <td>
                     {% if producto.imagen %}
-                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="img-thumbnail" width="200" height="200">
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="img-thumbnail" width="200"
+                        height="200">
                     {% else %}
-                        <span>Sin imagen</span>
+                    <span>Sin imagen</span>
                     {% endif %}
                 </td>
                 <td>{{ producto.nombre }}</td>
@@ -68,7 +70,8 @@
                             <h5 class="modal-title">Editar Producto</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form method="POST" action="{% url 'editar_producto' producto.id %}" enctype="multipart/form-data">
+                        <form method="POST" action="{% url 'editar_producto' producto.id %}"
+                            enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class="modal-body">
                                 <input type="file" name="imagen">
@@ -78,12 +81,14 @@
                                 <label>Marca:</label>
                                 <input type="text" class="form-control" name="marca" value="{{ producto.marca }}">
                                 <label>Cantidad:</label>
-                                <input type="number" class="form-control" name="cantidad" value="{{ producto.cantidad }}">
+                                <input type="number" class="form-control" name="cantidad"
+                                    value="{{ producto.cantidad }}">
                                 <label>Precio:</label>
                                 <input type="text" class="form-control" name="precio" value="{{ producto.precio }}">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-secondary"
+                                    data-bs-dismiss="modal">Cancelar</button>
                                 <button type="submit" class="btn btn-warning">Guardar Cambios</button>
                             </div>
                         </form>
@@ -92,8 +97,8 @@
             </div>
 
             <!-- Modal de Eliminar -->
-            <div class="modal fade" id="modalEliminar{{ producto.id }}" tabindex="-1"
-                aria-labelledby="eliminarLabel" aria-hidden="true">
+            <div class="modal fade" id="modalEliminar{{ producto.id }}" tabindex="-1" aria-labelledby="eliminarLabel"
+                aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">

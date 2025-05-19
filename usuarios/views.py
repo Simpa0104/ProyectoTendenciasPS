@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 
 def registro_usuario(request):
     if request.user.is_authenticated:
-        return redirect("dashboard")
+        return redirect("login")
 
     if request.method == 'POST':
         form = RegistroForm(request.POST)
