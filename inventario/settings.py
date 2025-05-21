@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "usuarios",
     "productos",
+    "ventas",
 ]
 
 AUTH_USER_MODEL = 'usuarios.UsuarioPersonalizado'

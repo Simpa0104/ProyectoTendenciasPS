@@ -79,3 +79,27 @@
 .big-btn:hover {
     background: #1c7c31;
 }
+
+/* Estilos para la tabla de ventas */
+#tablaProductos tbody tr:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.producto-row.selected {
+    background-color: #e2f0fd;
+}
+
+.cantidad-input {
+    width: 80px;
+}
+
+.subtotal {
+    font-weight: bold;
+    color: #28a745;
+}
+
+#totalVenta {
+    color: #dc3545;
+    font-weight: bold;
+}

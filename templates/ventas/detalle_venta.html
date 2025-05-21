@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3>Detalle de Venta #{{ venta.id }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Fecha:</strong> {{ venta.fecha_venta|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Cliente:</strong> {{ venta.cliente_nombre }}</p>
+                    {% if venta.cliente_documento %}
+                    <p><strong>Documento:</strong> {{ venta.cliente_documento }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Vendedor:</strong> {{ venta.vendedor.username }}</p>
+                    <p><strong>Método de Pago:</strong> {{ venta.get_metodo_pago_display }}</p>
+                    <p><strong>Total:</strong> ${{ venta.total|floatformat:2 }}</p>
+                </div>
+            </div>
+
+            <h4>Productos Vendidos</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalle in detalles %}
+                    <tr>
+                        <td>
+                            {% if detalle.producto.imagen %}
+                            <img src="{{ detalle.producto.imagen.url }}" width="50" class="me-2">
+                            {% endif %}
+                            {{ detalle.producto.nombre }}
+                        </td>
+                        <td>{{ detalle.cantidad }}</td>
+                        <td>${{ detalle.precio_unitario|floatformat:2 }}</td>
+                        <td>${{ detalle.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <a href="{% url 'listar_ventas' %}" class="btn btn-secondary">
+                Volver al Listado
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

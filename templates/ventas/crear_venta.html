@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Registrar Nueva Venta</h2>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="POST" id="ventaForm">
+        {% csrf_token %}
+
+        <div class="row">
+            <!-- Datos del cliente -->
+            <div class="col-md-5 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Datos del Cliente</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form_venta.cliente_nombre.label_tag }}
+                        {{ form_venta.cliente_nombre }}
+                        <div class="mt-3">
+                            {{ form_venta.cliente_documento.label_tag }}
+                            {{ form_venta.cliente_documento }}
+                        </div>
+                        <div class="mt-3">
+                            {{ form_venta.metodo_pago.label_tag }}
+                            {{ form_venta.metodo_pago }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de productos -->
+            <div class="col-md-7">
+                <div class="card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between">
+                        <h5 class="mb-0">Productos Disponibles</h5>
+                        <input type="text" id="buscadorProductos" class="form-control w-50"
+                            placeholder="Buscar producto...">
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaProductos">
+                                <thead>
+                                    <tr>
+                                        <th>Seleccionar</th>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                        <th>Stock</th>
+                                        <th>Cantidad</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <tbody>
+                                    {% for producto in productos %}
+                                    <tr class="producto-row" data-id="{{ producto.id }}"
+                                        data-precio="{{ producto.precio }}">
+                                        <td>
+                                            <input type="checkbox" class="form-check-input producto-check"
+                                                name="productos" value="{{ producto.id }}" {{ producto.cantidad
+                                                <=0|yesno:"disabled," }}>
+                                        </td>
+                                        <td>
+                                            {{ producto.imagen.url|default:""|yesno:"<img src='&' width='40'
+                                                class='me-2'>,"|safe }}
+                                            {{ producto.nombre }}
+                                            {{ producto.cantidad <= 0|yesno:"<span class='badge bg-danger ms-2'>
+                                                AGOTADO</span>,"|safe }}
+                                        </td>
+                                        <td>${{ producto.precio|floatformat:2 }}</td>
+                                        <td>
+                                            <span class="{{ producto.cantidad <= 0|yesno:'text-danger,' }}">
+                                                {{ producto.cantidad }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="cantidades" class="form-control cantidad-input"
+                                                min="1" max="{{ producto.cantidad }}" value="1" {{ producto.cantidad
+                                                <=0|yesno:"disabled," }}>
+                                        </td>
+                                        <td class="subtotal">$0.00</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No hay productos disponibles</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen de venta -->
+                <div class="card mt-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Resumen de Venta</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h4>Total:</h4>
+                            <h4 id="totalVenta">$0.00</h4>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-3">
+                            <i class="bi bi-check-circle"></i> Registrar Venta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Habilitar cantidad cuando se selecciona producto
+        document.querySelectorAll('.producto-check').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const cantidadInput = this.closest('tr').querySelector('.cantidad-input');
+                cantidadInput.disabled = !this.checked;
+                if (this.checked) {
+                    calcularSubtotal(this.closest('tr'));
+                } else {
+                    cantidadInput.value = 1;
+                    this.closest('tr').querySelector('.subtotal').textContent = '$0.00';
+                }
+                calcularTotal();
+            });
+        });
+
+        // Calcular subtotal cuando cambia cantidad
+        document.querySelectorAll('.cantidad-input').forEach(input => {
+            input.addEventListener('input', function () {
+                if (this.disabled) return;
+                const row = this.closest('tr');
+                calcularSubtotal(row);
+            });
+        });
+
+        // Función para calcular subtotal por fila
+        function calcularSubtotal(row) {
+            const precio = parseFloat(row.dataset.precio);
+            const cantidad = parseInt(row.querySelector('.cantidad-input').value) || 0;
+            const subtotal = precio * cantidad;
+            row.querySelector('.subtotal').textContent = '$' + subtotal.toFixed(2);
+            calcularTotal();
+        }
+
+        // Función para calcular total general
+        function calcularTotal() {
+            let total = 0;
+            document.querySelectorAll('.producto-row').forEach(row => {
+                if (row.querySelector('.producto-check').checked) {
+                    const subtotalText = row.querySelector('.subtotal').textContent;
+                    total += parseFloat(subtotalText.replace('$', '')) || 0;
+                }
+            });
+            document.getElementById('totalVenta').textContent = '$' + total.toFixed(2);
+        }
+
+        // Búsqueda en tiempo real
+        document.getElementById('buscadorProductos').addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('.producto-row').forEach(row => {
+                const nombre = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                row.style.display = nombre.includes(term) ? '' : 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}
