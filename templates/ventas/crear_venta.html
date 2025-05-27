@@ -61,33 +61,31 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                <tbody>
                                     {% for producto in productos %}
                                     <tr class="producto-row" data-id="{{ producto.id }}"
                                         data-precio="{{ producto.precio }}">
                                         <td>
                                             <input type="checkbox" class="form-check-input producto-check"
-                                                name="productos" value="{{ producto.id }}" {{ producto.cantidad
-                                                <=0|yesno:"disabled," }}>
-                                        </td>
+                                                name="productos" value="{{ producto.id }}" <!-- ------------------- -->
+                                            {% if producto.cantidad <= 0 %}disabled{% endif %} </td>
                                         <td>
-                                            {{ producto.imagen.url|default:""|yesno:"<img src='&' width='40'
-                                                class='me-2'>,"|safe }}
+                                            {% if producto.imagen %}
+                                            <img src="{{ producto.imagen.url }}" width="40" class="me-2">
+                                            {% endif %}
                                             {{ producto.nombre }}
-                                            {{ producto.cantidad <= 0|yesno:"<span class='badge bg-danger ms-2'>
-                                                AGOTADO</span>,"|safe }}
+                                            {% if producto.cantidad <= 0 %}<span class="badge bg-danger ms-2">
+                                                AGOTADO</span>{% endif %}
                                         </td>
                                         <td>${{ producto.precio|floatformat:2 }}</td>
                                         <td>
-                                            <span class="{{ producto.cantidad <= 0|yesno:'text-danger,' }}">
+                                            <span class="{% if producto.cantidad <= 0 %}text-danger{% endif %}">
                                                 {{ producto.cantidad }}
                                             </span>
                                         </td>
                                         <td>
                                             <input type="number" name="cantidades" class="form-control cantidad-input"
-                                                min="1" max="{{ producto.cantidad }}" value="1" {{ producto.cantidad
-                                                <=0|yesno:"disabled," }}>
-                                        </td>
+                                                min="1" max="{{ producto.cantidad }}" value="1" <!-- ------------- -->
+                                            {% if producto.cantidad <= 0 %}disabled{% endif %} </td>
                                         <td class="subtotal">$0.00</td>
                                     </tr>
                                     {% empty %}
@@ -95,7 +93,6 @@
                                         <td colspan="6" class="text-center">No hay productos disponibles</td>
                                     </tr>
                                     {% endfor %}
-                                </tbody>
                                 </tbody>
                             </table>
                         </div>
@@ -126,59 +123,49 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Habilitar cantidad cuando se selecciona producto
-        document.querySelectorAll('.producto-check').forEach(checkbox => {
-            checkbox.addEventListener('change', function () {
-                const cantidadInput = this.closest('tr').querySelector('.cantidad-input');
-                cantidadInput.disabled = !this.checked;
-                if (this.checked) {
-                    calcularSubtotal(this.closest('tr'));
-                } else {
-                    cantidadInput.value = 1;
-                    this.closest('tr').querySelector('.subtotal').textContent = '$0.00';
-                }
-                calcularTotal();
-            });
-        });
-
-        // Calcular subtotal cuando cambia cantidad
-        document.querySelectorAll('.cantidad-input').forEach(input => {
-            input.addEventListener('input', function () {
-                if (this.disabled) return;
-                const row = this.closest('tr');
-                calcularSubtotal(row);
-            });
-        });
-
-        // Función para calcular subtotal por fila
+        // Función para calcular subtotal
         function calcularSubtotal(row) {
-            const precio = parseFloat(row.dataset.precio);
+            const precio = parseFloat(row.dataset.precio) || 0;
             const cantidad = parseInt(row.querySelector('.cantidad-input').value) || 0;
             const subtotal = precio * cantidad;
             row.querySelector('.subtotal').textContent = '$' + subtotal.toFixed(2);
-            calcularTotal();
+            return subtotal;
         }
 
-        // Función para calcular total general
+        // Función para calcular total
         function calcularTotal() {
             let total = 0;
             document.querySelectorAll('.producto-row').forEach(row => {
                 if (row.querySelector('.producto-check').checked) {
-                    const subtotalText = row.querySelector('.subtotal').textContent;
-                    total += parseFloat(subtotalText.replace('$', '')) || 0;
+                    total += calcularSubtotal(row);
                 }
             });
             document.getElementById('totalVenta').textContent = '$' + total.toFixed(2);
         }
 
-        // Búsqueda en tiempo real
-        document.getElementById('buscadorProductos').addEventListener('input', function () {
-            const term = this.value.toLowerCase();
-            document.querySelectorAll('.producto-row').forEach(row => {
-                const nombre = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                row.style.display = nombre.includes(term) ? '' : 'none';
+        // Evento para checkboxes
+        document.querySelectorAll('.producto-check').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const cantidadInput = this.closest('tr').querySelector('.cantidad-input');
+                cantidadInput.disabled = !this.checked;
+                calcularTotal();
             });
         });
+
+        // Evento para inputs de cantidad
+        document.querySelectorAll('.cantidad-input').forEach(input => {
+            input.addEventListener('input', function () {
+                if (!this.disabled) {
+                    const row = this.closest('tr');
+                    if (row.querySelector('.producto-check').checked) {
+                        calcularTotal();
+                    }
+                }
+            });
+        });
+
+        // Inicializar cálculos al cargar
+        calcularTotal();
     });
 </script>
 {% endblock %}
