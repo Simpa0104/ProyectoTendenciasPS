@@ -12,7 +12,7 @@
         {{ message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-
+    
     {% endfor %}
     {% endif %}
 
@@ -65,13 +65,11 @@
                                 <tbody>
                                     {% for producto in productos %}
                                     <tr class="producto-row" data-id="{{ producto.id }}"
-                                        data-precio="{{ producto.precio }}">
+                                        data-precio="{{ producto.precio|stringformat:'f' }}">
                                         <td>
                                             <input type="checkbox" class="form-check-input producto-check"
-                                                name="productos" value="{{ producto.id }}" 
-                                                {% if producto.cantidad <= 0 %}disabled{% endif %} 
-                                                />
-                                        </td>
+                                                name="productos" value="{{ producto.id }}" <!-- ------------------- -->
+                                            {% if producto.cantidad <= 0 %}disabled{% endif %} </td>
                                         <td>
                                             {% if producto.imagen %}
                                             <img src="{{ producto.imagen.url }}" width="40" class="me-2">
@@ -88,10 +86,8 @@
                                         </td>
                                         <td>
                                             <input type="number" name="cantidades" class="form-control cantidad-input"
-                                                min="1" max="{{ producto.cantidad }}" value="1" 
-                                                {% if producto.cantidad <= 0 %}disabled{% endif %} 
-                                                />
-                                        </td>
+                                                min="1" max="{{ producto.cantidad }}" value="1" <!-- ------------- -->
+                                            {% if producto.cantidad <= 0 %}disabled{% endif %} </td>
                                         <td class="subtotal">$0</td>
                                     </tr>
                                     {% empty %}
@@ -114,7 +110,6 @@
                         <div class="d-flex justify-content-between">
                             <h4>Total:</h4>
                             <h4 id="totalVenta">$0</h4>
-                            <input type="hidden" name="total_calculado" id="totalCalculado" value="0">
                         </div>
                         <button type="submit" class="btn btn-primary w-100 mt-3">
                             <i class="bi bi-check-circle"></i> Registrar Venta
@@ -129,19 +124,22 @@
 
 {% block extra_js %}
 <script>
+    // Función para formatear números al estilo colombiano
+    function formatoColombiano(numero) {
+        return '$' + Math.round(numero).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        // Función para formatear números al estilo colombiano
-        function formatoColombiano(numero) {
-            return '$' + Math.round(numero).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
+        const tablaProductos = document.getElementById('tablaProductos');
+        const totalVentaElement = document.getElementById('totalVenta');
+        const totalCalculadoInput = document.getElementById('totalCalculado');
 
-        // Función para calcular y mostrar subtotal
-        function actualizarSubtotal(row) {
-            const precio = parseFloat(row.dataset.precio);
-            const cantidadInput = row.querySelector('.cantidad-input');
+        function calcularSubtotal(row) {
             const checkbox = row.querySelector('.producto-check');
-
+            const cantidadInput = row.querySelector('.cantidad-input');
+            const precio = parseFloat(row.dataset.precio);
             let subtotal = 0;
+
             if (checkbox.checked && !cantidadInput.disabled) {
                 const cantidad = parseInt(cantidadInput.value) || 0;
                 subtotal = precio * cantidad;
@@ -151,53 +149,39 @@
             return subtotal;
         }
 
-        // Función para calcular y mostrar el total
-        function actualizarTotal() {
+        function calcularTotal() {
             let total = 0;
 
             document.querySelectorAll('.producto-row').forEach(row => {
-                total += actualizarSubtotal(row);
+                total += calcularSubtotal(row);
             });
 
-            document.getElementById('totalVenta').textContent = formatoColombiano(total);
-            document.getElementById('totalCalculado').value = total;
+            totalVentaElement.textContent = formatoColombiano(total);
+            totalCalculadoInput.value = total;
+
+            console.log("Total calculado:", total);
         }
 
-        // Inicializar todos los valores al cargar la página
-        function inicializarCalculos() {
-            document.querySelectorAll('.producto-row').forEach(row => {
-                const checkbox = row.querySelector('.producto-check');
-                const cantidadInput = row.querySelector('.cantidad-input');
+        // Event delegation para mejor performance
+        tablaProductos.addEventListener('change', function (e) {
+            if (e.target.classList.contains('producto-check')) {
+                const cantidadInput = e.target.closest('tr').querySelector('.cantidad-input');
+                cantidadInput.disabled = !e.target.checked;
+                calcularTotal();
+            }
+        });
 
-                // Deshabilitar cantidad si no está chequeado al cargar
-                cantidadInput.disabled = !checkbox.checked;
-
-                // Calcular subtotal si ya está marcado
-                if (checkbox.checked) {
-                    actualizarSubtotal(row);
+        tablaProductos.addEventListener('input', function (e) {
+            if (e.target.classList.contains('cantidad-input')) {
+                const row = e.target.closest('tr');
+                if (row.querySelector('.producto-check').checked) {
+                    calcularTotal();
                 }
+            }
+        });
 
-                // Cuando se selecciona o deselecciona el checkbox
-                checkbox.addEventListener('change', function () {
-                    cantidadInput.disabled = !this.checked;
-                    actualizarSubtotal(row);  // recalcula el subtotal del producto
-                    actualizarTotal();        // recalcula el total general
-                });
-
-                // Cuando se cambia la cantidad
-                cantidadInput.addEventListener('input', function () {
-                    if (!this.disabled) {
-                        actualizarSubtotal(row);  // recalcula el subtotal del producto
-                        actualizarTotal();        // recalcula el total general
-                    }
-                });
-            });
-
-            actualizarTotal(); // Calcular total inicial
-        }
-
-        // Ejecutar al cargar la página
-        inicializarCalculos();
+        // Inicialización
+        calcularTotal();
     });
 </script>
 {% endblock %}

@@ -11,21 +11,24 @@ import json
 @login_required
 def crear_venta(request):
     if request.method == 'POST':
+        print("Datos recibidos:", request.POST)  # Para depuración
+        
         form_venta = VentaForm(request.POST)
         if form_venta.is_valid():
             try:
                 with transaction.atomic():
                     venta = form_venta.save(commit=False)
                     venta.vendedor = request.user
-                    venta.save()
-
+                    
                     productos_ids = request.POST.getlist('productos')
                     cantidades = request.POST.getlist('cantidades')
                     
                     if not productos_ids:
                         raise ValueError("Debe seleccionar al menos un producto")
 
-                    total_venta = 0
+                    total_backend = 0
+                    detalles = []
+                    
                     for producto_id, cantidad in zip(productos_ids, cantidades):
                         producto = Producto.objects.get(id=producto_id)
                         cantidad = int(cantidad)
@@ -34,40 +37,45 @@ def crear_venta(request):
                             continue
                             
                         if producto.cantidad < cantidad:
-                            raise ValueError(f"Stock insuficiente para {producto.nombre} (Stock: {producto.cantidad}, Solicitado: {cantidad})")
-                        
-                        # Restringir productos agotados
-                        if producto.cantidad <= 0:
-                            continue
+                            raise ValueError(f"Stock insuficiente para {producto.nombre}")
 
-                        detalle = DetalleVenta(
+                        subtotal = float(producto.precio) * cantidad
+                        total_backend += subtotal
+                        
+                        detalles.append(DetalleVenta(
                             venta=venta,
                             producto=producto,
                             cantidad=cantidad,
-                            precio_unitario=producto.precio
-                        )
-                        detalle.save()
-                        producto.cantidad -= cantidad
-                        producto.save()
-                        total_venta += detalle.subtotal
+                            precio_unitario=producto.precio,
+                            subtotal=subtotal
+                        ))
 
-                    if total_venta <= 0:
+                    print("Total calculado en backend:", total_backend)  # Depuración
+                    
+                    if total_backend <= 0:
                         raise ValueError("El total de la venta debe ser mayor a cero")
 
-                    venta.total = total_venta
+                    venta.total = total_backend
                     venta.save()
-                    messages.success(request, 'Venta registrada exitosamente!')
+                    DetalleVenta.objects.bulk_create(detalles)
+                    
+                    # Actualizar stock
+                    for detalle in detalles:
+                        detalle.producto.cantidad -= detalle.cantidad
+                        detalle.producto.save()
+
+                    messages.success(request, f'Venta registrada! Total: ${total_backend:.2f}')
                     return redirect('listar_ventas')
 
             except Exception as e:
                 messages.error(request, f'Error: {str(e)}')
-                transaction.rollback()
+                print("Error en la transacción:", str(e))  # Depuración
         else:
             messages.error(request, 'Corrija los errores en el formulario')
     else:
         form_venta = VentaForm()
 
-    productos = Producto.objects.all()  # Mostramos todos para ver los agotados
+    productos = Producto.objects.all()
     return render(request, 'ventas/crear_venta.html', {
         'form_venta': form_venta,
         'productos': productos
