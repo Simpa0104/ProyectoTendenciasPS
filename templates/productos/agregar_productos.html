@@ -55,7 +55,7 @@
                 <td>{{ producto.nombre }}</td>
                 <td>{{ producto.marca }}</td>
                 <td>{{ producto.cantidad }}</td>
-                <td>${{ producto.precio|intcomma }}</td>
+                <td>${{ producto.precio|floatformat:0|intcomma }}</td>
                 <td>
                     <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
                         data-bs-target="#modalEditar{{ producto.id }}">
