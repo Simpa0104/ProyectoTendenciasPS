@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block content %}
 <div class="container mt-4">
     <div class="card">
@@ -18,7 +18,7 @@
                 <div class="col-md-6">
                     <p><strong>Vendedor:</strong> {{ venta.vendedor.username }}</p>
                     <p><strong>Método de Pago:</strong> {{ venta.get_metodo_pago_display }}</p>
-                    <p><strong>Total:</strong> ${{ venta.total|floatformat:2 }}</p>
+                    <p><strong>Total:</strong> ${{ venta.total|floatformat:0|intcomma }}</p>
                 </div>
             </div>
 
@@ -42,8 +42,8 @@
                             {{ detalle.producto.nombre }}
                         </td>
                         <td>{{ detalle.cantidad }}</td>
-                        <td>${{ detalle.precio_unitario|floatformat:2 }}</td>
-                        <td>${{ detalle.subtotal|floatformat:2 }}</td>
+                        <td>${{ detalle.precio_unitario|floatformat:0|intcomma }}</td>
+                        <td>${{ detalle.subtotal|floatformat:0|intcomma }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
