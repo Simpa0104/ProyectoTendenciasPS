@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% load humanize %}
 {% block content %}
+
 <div class="container mt-4">
     <h2>Registrar Nueva Venta</h2>
 
@@ -11,6 +12,7 @@
         {{ message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
+
     {% endfor %}
     {% endif %}
 
@@ -66,8 +68,10 @@
                                         data-precio="{{ producto.precio }}">
                                         <td>
                                             <input type="checkbox" class="form-check-input producto-check"
-                                                name="productos" value="{{ producto.id }}" <!-- ------------------- -->
-                                            {% if producto.cantidad <= 0 %}disabled{% endif %} </td>
+                                                name="productos" value="{{ producto.id }}" 
+                                                {% if producto.cantidad <= 0 %}disabled{% endif %} 
+                                                />
+                                        </td>
                                         <td>
                                             {% if producto.imagen %}
                                             <img src="{{ producto.imagen.url }}" width="40" class="me-2">
@@ -76,7 +80,7 @@
                                             {% if producto.cantidad <= 0 %}<span class="badge bg-danger ms-2">
                                                 AGOTADO</span>{% endif %}
                                         </td>
-                                        <td>${{ producto.precio|floatformat:2 }}</td>
+                                        <td>${{producto.precio|floatformat:0|intcomma}}</td>
                                         <td>
                                             <span class="{% if producto.cantidad <= 0 %}text-danger{% endif %}">
                                                 {{ producto.cantidad }}
@@ -84,9 +88,11 @@
                                         </td>
                                         <td>
                                             <input type="number" name="cantidades" class="form-control cantidad-input"
-                                                min="1" max="{{ producto.cantidad }}" value="1" <!-- ------------- -->
-                                            {% if producto.cantidad <= 0 %}disabled{% endif %} </td>
-                                        <td class="subtotal">$0.00</td>
+                                                min="1" max="{{ producto.cantidad }}" value="1" 
+                                                {% if producto.cantidad <= 0 %}disabled{% endif %} 
+                                                />
+                                        </td>
+                                        <td class="subtotal">$0</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
@@ -107,7 +113,8 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <h4>Total:</h4>
-                            <h4 id="totalVenta">$0.00</h4>
+                            <h4 id="totalVenta">$0</h4>
+                            <input type="hidden" name="total_calculado" id="totalCalculado" value="0">
                         </div>
                         <button type="submit" class="btn btn-primary w-100 mt-3">
                             <i class="bi bi-check-circle"></i> Registrar Venta
@@ -123,49 +130,74 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Función para calcular subtotal
-        function calcularSubtotal(row) {
-            const precio = parseFloat(row.dataset.precio) || 0;
-            const cantidad = parseInt(row.querySelector('.cantidad-input').value) || 0;
-            const subtotal = precio * cantidad;
-            row.querySelector('.subtotal').textContent = '$' + subtotal.toFixed(2);
+        // Función para formatear números al estilo colombiano
+        function formatoColombiano(numero) {
+            return '$' + Math.round(numero).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        // Función para calcular y mostrar subtotal
+        function actualizarSubtotal(row) {
+            const precio = parseFloat(row.dataset.precio);
+            const cantidadInput = row.querySelector('.cantidad-input');
+            const checkbox = row.querySelector('.producto-check');
+
+            let subtotal = 0;
+            if (checkbox.checked && !cantidadInput.disabled) {
+                const cantidad = parseInt(cantidadInput.value) || 0;
+                subtotal = precio * cantidad;
+            }
+
+            row.querySelector('.subtotal').textContent = formatoColombiano(subtotal);
             return subtotal;
         }
 
-        // Función para calcular total
-        function calcularTotal() {
+        // Función para calcular y mostrar el total
+        function actualizarTotal() {
             let total = 0;
+
             document.querySelectorAll('.producto-row').forEach(row => {
-                if (row.querySelector('.producto-check').checked) {
-                    total += calcularSubtotal(row);
-                }
+                total += actualizarSubtotal(row);
             });
-            document.getElementById('totalVenta').textContent = '$' + total.toFixed(2);
+
+            document.getElementById('totalVenta').textContent = formatoColombiano(total);
+            document.getElementById('totalCalculado').value = total;
         }
 
-        // Evento para checkboxes
-        document.querySelectorAll('.producto-check').forEach(checkbox => {
-            checkbox.addEventListener('change', function () {
-                const cantidadInput = this.closest('tr').querySelector('.cantidad-input');
-                cantidadInput.disabled = !this.checked;
-                calcularTotal();
-            });
-        });
+        // Inicializar todos los valores al cargar la página
+        function inicializarCalculos() {
+            document.querySelectorAll('.producto-row').forEach(row => {
+                const checkbox = row.querySelector('.producto-check');
+                const cantidadInput = row.querySelector('.cantidad-input');
 
-        // Evento para inputs de cantidad
-        document.querySelectorAll('.cantidad-input').forEach(input => {
-            input.addEventListener('input', function () {
-                if (!this.disabled) {
-                    const row = this.closest('tr');
-                    if (row.querySelector('.producto-check').checked) {
-                        calcularTotal();
-                    }
+                // Deshabilitar cantidad si no está chequeado al cargar
+                cantidadInput.disabled = !checkbox.checked;
+
+                // Calcular subtotal si ya está marcado
+                if (checkbox.checked) {
+                    actualizarSubtotal(row);
                 }
-            });
-        });
 
-        // Inicializar cálculos al cargar
-        calcularTotal();
+                // Cuando se selecciona o deselecciona el checkbox
+                checkbox.addEventListener('change', function () {
+                    cantidadInput.disabled = !this.checked;
+                    actualizarSubtotal(row);  // recalcula el subtotal del producto
+                    actualizarTotal();        // recalcula el total general
+                });
+
+                // Cuando se cambia la cantidad
+                cantidadInput.addEventListener('input', function () {
+                    if (!this.disabled) {
+                        actualizarSubtotal(row);  // recalcula el subtotal del producto
+                        actualizarTotal();        // recalcula el total general
+                    }
+                });
+            });
+
+            actualizarTotal(); // Calcular total inicial
+        }
+
+        // Ejecutar al cargar la página
+        inicializarCalculos();
     });
 </script>
 {% endblock %}
